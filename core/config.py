@@ -52,6 +52,7 @@ class Settings(BaseSettings):
             "SQLALCHEMY_TRACK_MODIFICATIONS": False,
             "SQLALCHEMY_POOL_SIZE": self.mysql_pool_size,
             "SQLALCHEMY_POOL_TIMEOUT": self.mysql_pool_timeout,
+            "SQLALCHEMY_ECHO": self.debug
         }
 
 

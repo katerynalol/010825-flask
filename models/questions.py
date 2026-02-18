@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import String, Text, DateTime, Boolean, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base
 
@@ -30,6 +30,21 @@ class Question(Base):
         default=True
     )
 
+    options: Mapped[list['QuestionOption']] = relationship(
+        'QuestionOption',
+        back_populates='question',
+        cascade="all, delete-orphan"
+    )
+    answers: Mapped[list["Answer"]] = relationship(
+        back_populates="question",
+        cascade="all, delete-orphan"
+    )
+    statistics: Mapped["QuestionStatistics"] = relationship(
+        back_populates="question",
+        cascade="all, delete-orphan",
+        uselist=False
+    )
+
 
 class QuestionOption(Base):
     __tablename__ = 'question_options'
@@ -40,3 +55,9 @@ class QuestionOption(Base):
         nullable=False
     )
     text: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    question: Mapped["Question"] = relationship(
+        'Question',
+        back_populates='options'
+    )
+    answers: Mapped[list["Answer"]] = relationship(back_populates="option")
