@@ -1,9 +1,10 @@
 # sqlacodegen_v2 mysql+pymysql://ich1:ich1_password_ilovedbs@ich-edit.edu.itcareerhub.de:3306/social_blogs --outfile sqlalchemy_lessons/social_blogs_models.py
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import joinedload
 
 from lessons.sqlalchemy_lessons.lesson_2.db_connector import DBConnector
+from social_blogs_models import User, Role, News, Comment
 
 engine = create_engine(
     url="mysql+pymysql://ich1:ich1_password_ilovedbs@ich-edit.edu.itcareerhub.de:3306/social_blogs",
@@ -238,22 +239,22 @@ with DBConnector(engine) as session:
 
     # получить пользователей и для каждого пользователя взять его новости
 
-    stmt = (
-        select(User)
-        .join(Role, Role.id == User.role_id) # подгружается только таблица Ролей для фильтрации
-        .outerjoin(User.news)  # Необязательный метод, может помочь в тех случаях, когда нужно получить только полный мэтч (Получить только тех юзеров, у которых есть хоть одна новость)
-        .options(joinedload(User.news))  # подгружает непосредственно САМИ НОВОСТИ
-        .where(Role.name == 'author')  # фильтруем только тех пользователей, у которых определённое имя роли
-    )
-
-    result = session.execute(stmt).unique().scalars()  # при присоединении новостей мы получаем данные в формате:
+    # stmt = (
+    #     select(User)
+    #     .join(Role, Role.id == User.role_id) # подгружается только таблица Ролей для фильтрации
+    #     .outerjoin(User.news)  # Необязательный метод, может помочь в тех случаях, когда нужно получить только полный мэтч (Получить только тех юзеров, у которых есть хоть одна новость)
+    #     .options(joinedload(User.news))  # подгружает непосредственно САМИ НОВОСТИ
+    #     .where(Role.name == 'author')  # фильтруем только тех пользователей, у которых определённое имя роли
+    # )
+    #
+    # result = session.execute(stmt).unique().scalars()  # при присоединении новостей мы получаем данные в формате:
     # [User1(..., News1), User1(..., News2), User1(News3)] то есть каждая новость содержит инфо о пользователе.
     # из-за этого получаем много дубликатов. Чтобы их убрать, и запрос работал без ошибок -- добавляем к извлечению
     # данных метод .unique(). Тогда мы получаем данные в формате [User1(News1, News2, News3, News4)]
 
 
-    for user in result:
-        print(user.last_name, user.role_id, user.news)
+    # for user in result:
+    #     print(user.last_name, user.role_id, user.news)
 
 
 
@@ -357,8 +358,80 @@ with DBConnector(engine) as session:
 # Просто ради красоты, потому что вы вот так вот выучили лучше такие инструменты не использовать
 # В алхимии этот класс так же не будет помощником -- алхимия не умеет читать эти дополнительные метаданные.
 
+# ---------------------------------------------------------------------------------------------------------------------
+#     Напишите запрос, который возвращает пользователя с конкретным именем(например, "Anna").
+
+    # s = (select(
+    #     User)
+    # .where(
+    #     User.first_name == "Anna")
+    # )
+    #
+    # result =session.execute(s).scalars()
+    #
+    # print(result)
+    # print(list(result))
+    #
+    # for i in result:
+    #     print(i)
+    #     print(i.first_name)
 
 
+# NOTE: Напишите запрос для вывода всех пользователей, рейтинг которых больше 6.
+
+    # stmt = (
+    #     select(User)
+    #     .where(User.rating > 6)
+    #     # .order_by(User.rating)
+    #     .order_by(desc(User.rating))
+    # )
+    # result = session.execute(stmt).scalars()
+    # for user in result:
+    #     print(user.rating, user.first_name)
+
+
+
+# Обновить рейтинг пользователя "Anna" до 3.4 если такой есть.
+# Напишите запрос для обновления данных.
+
+    # stmt = (
+    #     select(User)
+    #     .where(User.first_name == 'Anna')
+    # )
+    #
+    # result = session.execute(stmt).scalars().first()
+    # print(result)
+    # if result:
+    #     result.rating = 3.3
+    #     session.commit()
+    #     print(result.first_name, result.rating)
+
+#Создайте запрос, который найдет максимальный и минимальный рейтинг среди пользователей.
+# Используйте функции func.max() и func.min().
+
+    # s = (select(func.min(User.rating).label("min_rating"),
+    #             func.max(User.rating).label("max_rating")))
+    #
+    # res = session.execute(s).all()
+    #
+    # print(res)
+    #
+    # print(res[0].min_rating)
+    # print(res[0].max_rating)
+
+
+#Напишите запрос, который группирует пользователей по рейтингу и подсчитывает количество пользователей в каждой группе.
+
+    stmt = (
+        select(User.rating,
+               func.count(User.id).label('user_count')
+               )
+        .group_by(User.rating)
+    )
+    result = session.execute(stmt).all()
+    # print(result)
+    for user in result:
+        print(user.rating, user.user_count)
 
 
 
